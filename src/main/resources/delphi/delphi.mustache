@@ -1,0 +1,175 @@
+unit {{apiPackage}};
+
+{ ********************************************************************** }
+{                                                                        }
+{ Dies ist ein automatisch generiertes Unit aus:                         }
+{ {{unescapedAppDescription}}                                            }
+{                                                                        }
+{ ********************************************************************** }
+
+interface
+
+uses REST.Types, REST.Client, System.JSON, REST.Json, System.SysUtils, 
+  System.StrUtils, NetEncoding;
+
+const
+{{#servers}}
+  host = '{{url}}';
+{{/servers}}
+
+type
+
+{{#models}}
+{{#model}}
+  {{classname}} = class;
+{{/model}}
+{{/models}}
+
+{{#models}}
+{{#model}}
+
+  {{classname}} = class(TObject)
+  private
+    { Variablen }
+    {{#vars}}
+    F{{name}} : {{vendorExtensions.delphi-datatype}};
+    {{/vars}}
+    { Getter }
+    {{#vars}}
+    function Get_{{name}}() : {{vendorExtensions.delphi-datatype}};
+    {{/vars}}
+    { Setter }
+    {{#vars}}
+    procedure Set_{{name}}({{name}} : {{vendorExtensions.delphi-datatype}});
+    {{/vars}}
+  public
+    {{#vars}}
+    property {{name}}: {{vendorExtensions.delphi-datatype}} read Get_{{name}} write Set_{{name}};
+    {{/vars}}
+  end;
+{{/model}}
+{{/models}}
+
+  TOnBeforeRequest = procedure(Request : TRESTRequest);
+  TOnAfterRequest = procedure(Request : TRESTRequest);
+
+  TService = class(TObject)
+  private
+    FOnBeforeRequest : TOnBeforeRequest;
+    FOnAfterRequest : TOnAfterRequest;
+  public
+  {{#apiInfo.apis}}
+  {{#operations}}
+  {{#operation}}
+  {{#responses}}
+  {{#vendorExtensions.delphi-function}}
+    function {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}}) : {{dataType}};
+  {{/vendorExtensions.delphi-function}}
+  {{#vendorExtensions.delphi-procedure}}
+    procedure {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}});
+  {{/vendorExtensions.delphi-procedure}}
+  {{/responses}}
+  {{/operation}}
+  {{/operations}}
+  {{/apiInfo.apis}}
+    property OnBeforeRequest : TOnBeforeRequest read FOnBeforeRequest write FOnBeforeRequest;
+    property OnAfterRequest : TOnAfterRequest read FOnAfterRequest write FOnAfterRequest;
+  end;
+  
+implementation
+
+{ Getter }
+{{#models}}
+{{#model}}
+{{#vars}}
+
+function {{classname}}.Get_{{name}}() : {{vendorExtensions.delphi-datatype}};
+begin
+  Result := F{{name}};
+end;
+{{/vars}}
+{{/model}}
+{{/models}}
+
+{ Setter }
+{{#models}}
+{{#model}}
+{{#vars}}
+
+procedure {{classname}}.Set_{{name}}({{name}}: {{vendorExtensions.delphi-datatype}});
+begin
+  F{{name}} := {{name}};
+end;
+{{/vars}}
+{{/model}}
+{{/models}}
+
+{ Zugriffsmethoden }
+
+{{#apiInfo.apis}}
+{{#operations}}
+{{#operation}}
+{{#responses}}
+{{#vendorExtensions.delphi-function}}
+function TService.{{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}}) : {{dataType}};
+{{/vendorExtensions.delphi-function}}
+{{#vendorExtensions.delphi-procedure}}
+procedure TService.{{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}});
+{{/vendorExtensions.delphi-procedure}}
+{{/responses}}
+var
+  Request : TRESTRequest;
+  baseUrl : String;
+  {{^bodyParams.isEmpty}}
+  body : String;
+  {{/bodyParams.isEmpty}}
+begin
+  Request := TRESTRequest.Create(self);
+  Request.Client := TRestClient.Create(self);
+  Request.Response := TRESTResponse.Create(self);
+
+  baseUrl := ReplaceStr(host, '{basepath}', '{{basePathWithoutHost}}{{path}}');
+  {{#pathParams}}
+  baseUrl := ReplaceStr(baseUrl, '{{=<% %>=}}{<%={{ }}=%>{{paramName}}{{=<% %>=}}}<%={{ }}=%>', TNetEncoding.URL.Encode({{paramName}}.ToString));
+  {{/pathParams}}
+
+  {{#queryParams}}
+  Request.AddParameter('{{paramName}}', {{paramName}}.ToString, false);
+  {{/queryParams}}
+  {{^bodyParams.isEmpty}}
+  
+  body := '';
+  {{#bodyParams}}
+  body := body + '{{paramName}}=' + {{paramName}}.ToString + #13#10;
+  {{/bodyParams}}
+  if body <> '' then
+  begin
+    Request.AddBody(body);
+  end;
+  {{/bodyParams.isEmpty}}
+  
+  Request.Client.BaseURL := baseUrl;
+  Request.Method := rm{{httpMethod}};
+
+  if Assigned(OnBeforeRequest) then
+    OnBeforeRequest(Request);
+  Request.Execute;
+  if Assigned(OnAfterRequest) then
+    OnAfterRequest(Request);
+  
+{{#responses}}
+{{#vendorExtensions.delphi-function}}
+  Result := TJson.JsonToObject<{{#responses}}{{dataType}}{{/responses}}>(Request.Response.Content);
+{{/vendorExtensions.delphi-function}}
+{{/responses}}
+
+  Request.Response.Free;
+  Request.Client.Free;
+  FreeAndNil(Request);
+end;
+
+{{/operation}}
+{{/operations}}
+{{/apiInfo.apis}}
+
+end.
