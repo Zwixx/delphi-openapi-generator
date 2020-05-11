@@ -25,6 +25,10 @@ type
 {{/model}}
 {{/models}}
 
+{{#delphi-arrays}}
+  {{{.}}}
+{{/delphi-arrays}}
+
 {{#models}}
 {{#model}}
 
@@ -57,7 +61,11 @@ type
   private
     FOnBeforeRequest : TOnBeforeRequest;
     FOnAfterRequest : TOnAfterRequest;
+    Request : TRESTRequest;
+    procedure ClearRequest;
   public
+  	constructor Create();
+  	destructor Destroy(); 
   {{#apiInfo.apis}}
   {{#operations}}
   {{#operation}}
@@ -118,29 +126,26 @@ procedure TService.{{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^
 {{/vendorExtensions.delphi-procedure}}
 {{/responses}}
 var
-  Request : TRESTRequest;
   baseUrl : String;
   {{^bodyParams.isEmpty}}
   body : String;
   {{/bodyParams.isEmpty}}
 begin
-  Request := TRESTRequest.Create(self);
-  Request.Client := TRestClient.Create(self);
-  Request.Response := TRESTResponse.Create(self);
-
+  ClearRequest;
+  
   baseUrl := ReplaceStr(host, '{basepath}', '{{basePathWithoutHost}}{{path}}');
   {{#pathParams}}
-  baseUrl := ReplaceStr(baseUrl, '{{=<% %>=}}{<%={{ }}=%>{{paramName}}{{=<% %>=}}}<%={{ }}=%>', TNetEncoding.URL.Encode({{paramName}}.ToString));
+  baseUrl := ReplaceStr(baseUrl, '{{=<% %>=}}{<%={{ }}=%>{{paramName}}{{=<% %>=}}}<%={{ }}=%>', TNetEncoding.URL.Encode({{vendorExtensions.delphi-toString}}));
   {{/pathParams}}
 
   {{#queryParams}}
-  Request.AddParameter('{{paramName}}', {{paramName}}.ToString, false);
+  Request.AddParameter('{{paramName}}', {{vendorExtensions.delphi-toString}});
   {{/queryParams}}
   {{^bodyParams.isEmpty}}
   
   body := '';
   {{#bodyParams}}
-  body := body + '{{paramName}}=' + {{paramName}}.ToString + #13#10;
+  body := body + '{{paramName}}=' + {{vendorExtensions.delphi-toString}} + #13#10;
   {{/bodyParams}}
   if body <> '' then
   begin
@@ -162,14 +167,30 @@ begin
   Result := TJson.JsonToObject<{{#responses}}{{dataType}}{{/responses}}>(Request.Response.Content);
 {{/vendorExtensions.delphi-function}}
 {{/responses}}
-
-  Request.Response.Free;
-  Request.Client.Free;
-  FreeAndNil(Request);
 end;
 
 {{/operation}}
 {{/operations}}
 {{/apiInfo.apis}}
+
+constructor TService.Create();
+begin
+  Request := TRESTRequest.Create(nil);
+  Request.Client := TRestClient.Create(nil);
+  Request.Response := TRESTResponse.Create(nil);
+end;
+
+destructor TService.Destroy(); 
+begin
+  Request.Response.Free;
+  Request.Client.Free;
+  FreeAndNil(Request);
+end;
+
+procedure TService.ClearRequest;
+begin
+  Request.ClearBody;
+  Request.Params.Clear;
+end;
 
 end.

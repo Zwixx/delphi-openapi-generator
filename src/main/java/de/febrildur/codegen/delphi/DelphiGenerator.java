@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.openapitools.codegen.CodegenConfig;
 import org.openapitools.codegen.CodegenModel;
@@ -48,15 +49,18 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs, List<Object> allModels) {
+		Map<String, Object> results = super.postProcessOperationsWithModels(objs, allModels);
 
 		Map<String, Object> operations = (Map<String, Object>) objs.get("operations");
 		System.out.println(operations.get("classname"));
 		List<CodegenOperation> operation = (List<CodegenOperation>) operations.get("operation");
 
 		for (CodegenOperation op : operation) {
-			for (CodegenParameter param : op.allParams) {
-				param.dataType = getReservedWord(param.dataType);
-			}
+			generateToString(op.allParams);
+			generateToString(op.queryParams);
+			generateToString(op.bodyParams);
+			generateToString(op.pathParams);
+			
 			for (CodegenResponse resp : op.responses) {
 				resp.dataType = getReservedWord(resp.dataType);
 
@@ -73,8 +77,7 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 			}
 		}
 
-		Map<String, Object> results = super.postProcessOperationsWithModels(objs, allModels);
-
+		Set<String> arrays = new HashSet<>();
 		for (Object mod : allModels) {
 			Map<String, Object> curmod = (Map<String, Object>) mod;
 
@@ -84,13 +87,26 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 			for (CodegenProperty var : model.getVars()) {
 				var.vendorExtensions.put("delphi-datatype", var.getDataType());
 				if (var.isContainer) {
-					var.vendorExtensions.put("delphi-datatype", "Array of " + getReservedWord(var.getComplexType()));
+					String name = getReservedWord(var.getComplexType());
+					var.vendorExtensions.put("delphi-datatype", "Array_of_" + name);
+					arrays.add("Array_of_" + name + " = Array of " + name + ";");
 				}
 				var.vendorExtensions.put("delphi-datatype", getReservedWord((String) var.vendorExtensions.get("delphi-datatype")));
 			}
 		}
-
+		additionalProperties.put("delphi-arrays", arrays);
 		return results;
+	}
+
+	private void generateToString(List<CodegenParameter> params) {
+		for (CodegenParameter param : params) {
+			param.dataType = getReservedWord(param.dataType);
+			if (!"String".equals(param.dataType)) {
+				param.vendorExtensions.put("delphi-toString", param.paramName + ".ToString");
+			} else {
+				param.vendorExtensions.put("delphi-toString", param.paramName);
+			}
+		}
 	}
 	
 	private String getReservedWord(String dataType) {
