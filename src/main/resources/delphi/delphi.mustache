@@ -166,7 +166,10 @@ begin
   ExecuteRequest;
     
 {{#vendorExtensions.delphi-function}}
-  Result := TJson.JsonToObject<{{#responses}}{{dataType}}{{/responses}}>(Request.Response.Content);
+  if Request.Response.Content <> '' then
+    Result := TJson.JsonToObject<{{#responses}}{{dataType}}{{/responses}}>(Request.Response.Content)
+  else
+    Result := nil;
 {{/vendorExtensions.delphi-function}}
 end;
 
