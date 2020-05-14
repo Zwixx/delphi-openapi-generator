@@ -63,20 +63,23 @@ type
     FOnAfterRequest : TOnAfterRequest;
     Request : TRESTRequest;
     procedure ClearRequest;
+    procedure ExecuteRequest;
   public
   	constructor Create();
   	destructor Destroy(); 
   {{#apiInfo.apis}}
   {{#operations}}
   {{#operation}}
-  {{#responses}}
   {{#vendorExtensions.delphi-function}}
+  {{#responses}}
+  {{#vendorExtensions.delphi-relevant}}
     function {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}}) : {{dataType}};
+  {{/vendorExtensions.delphi-relevant}}
+  {{/responses}}
   {{/vendorExtensions.delphi-function}}
   {{#vendorExtensions.delphi-procedure}}
     procedure {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}});
   {{/vendorExtensions.delphi-procedure}}
-  {{/responses}}
   {{/operation}}
   {{/operations}}
   {{/apiInfo.apis}}
@@ -117,14 +120,16 @@ end;
 {{#apiInfo.apis}}
 {{#operations}}
 {{#operation}}
-{{#responses}}
 {{#vendorExtensions.delphi-function}}
+{{#responses}}
+{{#vendorExtensions.delphi-relevant}}
 function TService.{{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}}) : {{dataType}};
+{{/vendorExtensions.delphi-relevant}}
+{{/responses}}
 {{/vendorExtensions.delphi-function}}
 {{#vendorExtensions.delphi-procedure}}
 procedure TService.{{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{^-last}}; {{/-last}}{{/allParams}});
 {{/vendorExtensions.delphi-procedure}}
-{{/responses}}
 var
   baseUrl : String;
   {{^bodyParams.isEmpty}}
@@ -137,10 +142,12 @@ begin
   {{#pathParams}}
   baseUrl := ReplaceStr(baseUrl, '{{=<% %>=}}{<%={{ }}=%>{{paramName}}{{=<% %>=}}}<%={{ }}=%>', TNetEncoding.URL.Encode({{vendorExtensions.delphi-toString}}));
   {{/pathParams}}
+  {{^queryParams.isEmpty}}
 
   {{#queryParams}}
   Request.AddParameter('{{paramName}}', {{vendorExtensions.delphi-toString}});
   {{/queryParams}}
+  {{/queryParams.isEmpty}}
   {{^bodyParams.isEmpty}}
   
   body := '';
@@ -156,17 +163,11 @@ begin
   Request.Client.BaseURL := baseUrl;
   Request.Method := rm{{httpMethod}};
 
-  if Assigned(OnBeforeRequest) then
-    OnBeforeRequest(Request);
-  Request.Execute;
-  if Assigned(OnAfterRequest) then
-    OnAfterRequest(Request);
-  
-{{#responses}}
+  ExecuteRequest;
+    
 {{#vendorExtensions.delphi-function}}
   Result := TJson.JsonToObject<{{#responses}}{{dataType}}{{/responses}}>(Request.Response.Content);
 {{/vendorExtensions.delphi-function}}
-{{/responses}}
 end;
 
 {{/operation}}
@@ -191,6 +192,15 @@ procedure TService.ClearRequest;
 begin
   Request.ClearBody;
   Request.Params.Clear;
+end;
+
+procedure TService.ExecuteRequest;
+begin
+  if Assigned(OnBeforeRequest) then
+    OnBeforeRequest(Request);
+  Request.Execute;
+  if Assigned(OnAfterRequest) then
+    OnAfterRequest(Request);
 end;
 
 end.

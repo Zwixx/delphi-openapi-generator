@@ -11,7 +11,7 @@ public class DelphiGeneratorTest {
 	@Test
 	public void launchCodeGenerator() {
 		final CodegenConfigurator configurator = new CodegenConfigurator().setGeneratorName("delphi")
-				.setInputSpec("sell_account_v1_oas3.json").setVerbose(false).setOutputDir("out/delphi");
+				.setInputSpec("sell_account_v1_oas3.json").setVerbose(true).setOutputDir("out/delphi");
 
 		final ClientOptInput clientOptInput = configurator.toClientOptInput();
 		DefaultGenerator generator = new DefaultGenerator();

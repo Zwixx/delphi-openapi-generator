@@ -61,19 +61,21 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 			generateToString(op.bodyParams);
 			generateToString(op.pathParams);
 			
+			op.vendorExtensions.put("delphi-function", false);
+			op.vendorExtensions.put("delphi-procedure", false);
+			
 			for (CodegenResponse resp : op.responses) {
 				resp.dataType = getReservedWord(resp.dataType);
 
 				if (resp.code.startsWith("2") && resp.dataType != null) {
-					resp.vendorExtensions.put("delphi-function", true);
-					resp.vendorExtensions.put("delphi-procedure", false);
-				} else if (resp.code.startsWith("2") && resp.dataType == null) {
-					resp.vendorExtensions.put("delphi-function", false);
-					resp.vendorExtensions.put("delphi-procedure", true);
-				} else {
-					resp.vendorExtensions.put("delphi-function", false);
-					resp.vendorExtensions.put("delphi-procedure", false);
+					op.vendorExtensions.put("delphi-function", true);
+					op.vendorExtensions.put("delphi-procedure", false);
+					resp.vendorExtensions.put("delphi-relevant", true);
 				}
+			}
+			if (!(boolean) op.vendorExtensions.get("delphi-function")) {
+				op.vendorExtensions.put("delphi-procedure", true);
+				op.responses.get(0).vendorExtensions.put("delphi-relevant", true);
 			}
 		}
 
