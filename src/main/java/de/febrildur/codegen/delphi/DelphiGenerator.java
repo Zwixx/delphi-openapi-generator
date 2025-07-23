@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.openapitools.codegen.CodegenConfig;
@@ -16,6 +15,8 @@ import org.openapitools.codegen.CodegenResponse;
 import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.DefaultCodegen;
 import org.openapitools.codegen.SupportingFile;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.OperationsMap;
 
 public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 
@@ -48,11 +49,10 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs, List<Object> allModels) {
-		Map<String, Object> results = super.postProcessOperationsWithModels(objs, allModels);
+	public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
+		OperationsMap results = super.postProcessOperationsWithModels(objs, allModels);
 
 		Map<String, Object> operations = (Map<String, Object>) objs.get("operations");
-		System.out.println(operations.get("classname"));
 		List<CodegenOperation> operation = (List<CodegenOperation>) operations.get("operation");
 
 		for (CodegenOperation op : operation) {
@@ -80,11 +80,9 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 		}
 
 		Set<String> arrays = new HashSet<>();
-		for (Object mod : allModels) {
-			Map<String, Object> curmod = (Map<String, Object>) mod;
+		for (ModelMap mod : allModels) {
+			CodegenModel model = mod.getModel();
 
-			CodegenModel model = (CodegenModel) curmod.get("model");
-			
 			model.setClassname(getReservedWord(model.getClassname()));
 			for (CodegenProperty var : model.getVars()) {
 				var.vendorExtensions.put("delphi-datatype", var.getDataType());
