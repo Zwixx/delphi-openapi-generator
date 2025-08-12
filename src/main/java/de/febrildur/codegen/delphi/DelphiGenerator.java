@@ -20,10 +20,15 @@ import org.openapitools.codegen.model.OperationsMap;
 
 public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 
-	protected String sourceFolder = "src";
 	protected String apiVersion = "1.0.0";
 
-	/**
+    private static final Map<String, String> delphiTypeMapping = Map.of(
+            "Object", "TObject",
+            "BigDecimal", "Double",
+            "Long", "Int64"
+    );
+
+    /**
 	 * Configures the type of generator.
 	 * 
 	 * @return the CodegenType for this generator
@@ -110,9 +115,10 @@ public class DelphiGenerator extends DefaultCodegen implements CodegenConfig {
 	}
 	
 	private String getReservedWord(String dataType) {
-		if (dataType != null && dataType.equals("Object")) {
-			return "TObject";
-		} else if (dataType != null) {
+		if (dataType != null) {
+            if (delphiTypeMapping.containsKey(dataType)) {
+                return delphiTypeMapping.get(dataType);
+            }
 			if (reservedWords.contains(dataType.toLowerCase())) {
 				return escapeReservedWord(dataType);
 			} else {

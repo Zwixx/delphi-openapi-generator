@@ -59,13 +59,14 @@ type
 
   TService = class(TObject)
   private
+    basepath : String;
     FOnBeforeRequest : TOnBeforeRequest;
     FOnAfterRequest : TOnAfterRequest;
     Request : TRESTRequest;
     procedure ClearRequest;
     procedure ExecuteRequest;
   public
-  	constructor Create();
+  	constructor Create(basePath: String);
   	destructor Destroy(); 
   {{#apiInfo.apis}}
   {{#operations}}
@@ -138,7 +139,7 @@ var
 begin
   ClearRequest;
   
-  baseUrl := ReplaceStr(host, '{basepath}', '{{basePathWithoutHost}}{{path}}');
+  baseUrl := ReplaceStr(self.basepath, '{basepath}', '{{basePathWithoutHost}}{{path}}');
   {{#pathParams}}
   baseUrl := ReplaceStr(baseUrl, '{{=<% %>=}}{<%={{ }}=%>{{paramName}}{{=<% %>=}}}<%={{ }}=%>', TNetEncoding.URL.Encode({{vendorExtensions.delphi-toString}}));
   {{/pathParams}}
@@ -177,11 +178,12 @@ end;
 {{/operations}}
 {{/apiInfo.apis}}
 
-constructor TService.Create();
+constructor TService.Create(basePath: String);
 begin
   Request := TRESTRequest.Create(nil);
   Request.Client := TRestClient.Create(nil);
   Request.Response := TRESTResponse.Create(nil);
+  self.basePath := basePath;
 end;
 
 destructor TService.Destroy(); 

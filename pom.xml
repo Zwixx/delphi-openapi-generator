@@ -6,6 +6,7 @@
     <packaging>jar</packaging>
     <name>delphi-openapi-generator</name>
     <version>1.0.0</version>
+
     <build>
         <plugins>
             <plugin>
@@ -124,5 +125,8 @@
         <openapi-generator-version>7.14.0</openapi-generator-version>
         <maven-plugin-version>1.0.0</maven-plugin-version>
         <junit-version>4.13.1</junit-version>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 </project>
